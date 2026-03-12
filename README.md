@@ -36,6 +36,7 @@ That makes the repo useful as a small build and publication system for upstream 
 .
 |-- README.md
 |-- packages/
+|   |-- gvm-libs.toml
 |   |-- gvmd.toml
 |   |-- pg-gvm-pg17.toml
 |   `-- openvas-scanner.toml
@@ -204,6 +205,13 @@ The default operating model is explicit:
 4. List every produced file you want in the final archive under `targets[].output_files`.
 5. Trigger the manual workflow with `publish=false` first.
 6. Once the archive contents look correct, rerun with `publish=true`.
+
+Current example packages in this repository:
+
+- `packages/openvas-scanner.toml`
+- `packages/gvm-libs.toml`
+- `packages/gvmd.toml`
+- `packages/pg-gvm-pg17.toml`
 
 ## How to run a manual build
 

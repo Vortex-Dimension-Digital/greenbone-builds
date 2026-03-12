@@ -1,0 +1,63 @@
+schema_version = 1
+id = "gvm-libs"
+name = "GVM Libraries"
+description = "Builds the upstream gvm-libs project from source and packages the shared libraries, headers, and pkg-config metadata for linux amd64."
+
+[upstream]
+repo = "https://github.com/greenbone/gvm-libs.git"
+ref = "v22.37.0"
+version = "v22.37.0"
+
+[build]
+system = "cmake"
+subdir = "."
+dependencies = [
+  "build-essential",
+  "cmake",
+  "gcc",
+  "git",
+  "libcjson-dev",
+  "libcrypt-dev",
+  "libgcrypt-dev",
+  "libglib2.0-dev",
+  "libgnutls28-dev",
+  "libgpgme-dev",
+  "libhiredis-dev",
+  "libnet1-dev",
+  "libpaho-mqtt-dev",
+  "libpcap-dev",
+  "libssh-dev",
+  "libxml2-dev",
+  "pkg-config",
+  "uuid-dev",
+  "zlib1g-dev",
+  "xmltoman",
+]
+commands = [
+  "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DENABLE_OPENVASD=OFF -DENABLE_AGENTS=OFF -DENABLE_CREDENTIAL_STORES=OFF -DBUILD_WITH_LDAP=OFF -DBUILD_WITH_RADIUS=OFF -DBUILD_TESTS=OFF",
+  "cmake --build build --parallel \"${BUILD_JOBS}\"",
+  "rm -rf pkgroot",
+  "DESTDIR=\"$PWD/pkgroot\" cmake --install build",
+]
+
+[release]
+tag_template = "{package}/{version}-{revision}"
+name_template = "{name} {version} ({revision})"
+archive_template = "{package}-{version}-{revision}-{os}-{arch}"
+notes = """
+Internal rebuild of upstream source.
+"""
+
+[[targets]]
+os = "linux"
+arch = "amd64"
+archive = "tar.gz"
+output_files = [
+  "pkgroot/usr/local/lib/libgvm_base.so",
+  "pkgroot/usr/local/lib/libgvm_boreas.so",
+  "pkgroot/usr/local/lib/libgvm_gmp.so",
+  "pkgroot/usr/local/lib/libgvm_osp.so",
+  "pkgroot/usr/local/lib/libgvm_util.so",
+  "pkgroot/usr/local/lib/pkgconfig",
+  "pkgroot/usr/local/include/gvm",
+]
