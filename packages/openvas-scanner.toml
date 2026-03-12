@@ -1,0 +1,63 @@
+schema_version = 1
+id = "openvas-scanner"
+name = "OpenVAS Scanner"
+description = "Builds the upstream Greenbone OpenVAS scanner from source and packages an installed amd64 layout."
+
+[upstream]
+repo = "https://github.com/greenbone/openvas-scanner.git"
+ref = "v23.41.2"
+version = "v23.41.2"
+
+[build]
+system = "cmake"
+subdir = "."
+dependencies = [
+  "bison",
+  "build-essential",
+  "cmake",
+  "curl",
+  "flex",
+  "git",
+  "krb5-multidev",
+  "libbsd-dev",
+  "libcurl4-gnutls-dev",
+  "libgcrypt20-dev",
+  "libglib2.0-dev",
+  "libgpgme-dev",
+  "libgnutls28-dev",
+  "libgvm-dev",
+  "libjson-glib-dev",
+  "libksba-dev",
+  "libmagic-dev",
+  "libpaho-mqtt-dev",
+  "libpcap-dev",
+  "libssh-dev",
+  "libsnmp-dev",
+  "libssl-dev",
+  "libhiredis-dev",
+  "pkg-config",
+]
+commands = [
+  "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local",
+  "cmake --build build --parallel \"${BUILD_JOBS}\"",
+  "rm -rf pkgroot",
+  "DESTDIR=\"$PWD/pkgroot\" cmake --install build",
+]
+
+[release]
+tag_template = "{package}/{version}-{revision}"
+name_template = "{name} {version} ({revision})"
+archive_template = "{package}-{version}-{revision}-{os}-{arch}"
+notes = """
+Internal rebuild of upstream source.
+"""
+
+[[targets]]
+os = "linux"
+arch = "amd64"
+archive = "tar.gz"
+output_files = [
+  "pkgroot/usr/local/sbin/openvas",
+  "pkgroot/etc/openvas/openvas_log.conf",
+  "pkgroot/usr/local/share/man/man8/openvas.8",
+]

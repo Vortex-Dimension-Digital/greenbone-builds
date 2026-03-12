@@ -1,0 +1,143 @@
+name: Build Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Package manifest id under packages/*.toml"
+        required: true
+        type: string
+      upstream_ref:
+        description: "Optional override for upstream git ref, tag, or commit"
+        required: false
+        type: string
+      release_version:
+        description: "Optional override for release-facing upstream version label"
+        required: false
+        type: string
+      revision:
+        description: "Internal rebuild revision (1, r1, -r1, .1)"
+        required: true
+        default: "1"
+        type: string
+      target_os:
+        description: "Target operating system"
+        required: true
+        default: "linux"
+        type: string
+      target_arch:
+        description: "Target architecture"
+        required: true
+        default: "amd64"
+        type: string
+      archive_format:
+        description: "Release archive format"
+        required: true
+        default: "tar.gz"
+        type: choice
+        options:
+          - tar.gz
+          - tar.zst
+      runner:
+        description: "Runner label"
+        required: true
+        default: "ubuntu-latest"
+        type: choice
+        options:
+          - ubuntu-latest
+          - self-hosted
+      publish:
+        description: "Create or update the GitHub Release and upload assets"
+        required: true
+        default: false
+        type: boolean
+      upload_artifact:
+        description: "Upload the packaged files as workflow artifacts"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ inputs.runner }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Resolve package manifest
+        id: resolve
+        run: |
+          python3 scripts/resolve_package.py \
+            --package "${{ inputs.package }}" \
+            --target-os "${{ inputs.target_os }}" \
+            --target-arch "${{ inputs.target_arch }}" \
+            --upstream-ref "${{ inputs.upstream_ref }}" \
+            --release-version "${{ inputs.release_version }}" \
+            --revision "${{ inputs.revision }}" \
+            --archive-format "${{ inputs.archive_format }}" \
+            --github-output "${GITHUB_OUTPUT}" \
+            --github-env "${GITHUB_ENV}"
+
+      - name: Show resolved package
+        run: |
+          cat build/resolved.json
+
+      - name: Install build dependencies
+        run: |
+          scripts/install_build_deps.sh
+
+      - name: Build upstream package
+        run: |
+          scripts/build_package.sh
+
+      - name: Package build outputs
+        run: |
+          scripts/package_artifacts.sh
+
+      - name: Upload workflow artifacts
+        if: ${{ inputs.upload_artifact }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.resolve.outputs.archive_basename }}
+          path: |
+            dist/${{ steps.resolve.outputs.archive_filename }}
+            dist/${{ steps.resolve.outputs.checksum_filename }}
+          if-no-files-found: error
+
+      - name: Show packaged files
+        if: ${{ !inputs.upload_artifact }}
+        run: |
+          ls -lah dist
+
+      - name: Create or update GitHub Release
+        if: ${{ inputs.publish }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.resolve.outputs.release_tag }}
+          name: ${{ steps.resolve.outputs.release_name }}
+          body_path: ${{ steps.resolve.outputs.release_notes_file }}
+          files: |
+            dist/${{ steps.resolve.outputs.archive_filename }}
+            dist/${{ steps.resolve.outputs.checksum_filename }}
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          make_latest: false
+
+      - name: Write workflow summary
+        run: |
+          {
+            echo "## Build result"
+            echo
+            echo "- Package: \`${{ steps.resolve.outputs.package_id }}\`"
+            echo "- Target: \`${{ steps.resolve.outputs.target }}\`"
+            echo "- Build system: \`${{ steps.resolve.outputs.build_system }}\`"
+            echo "- Release tag: \`${{ steps.resolve.outputs.release_tag }}\`"
+            echo "- Archive: \`${{ steps.resolve.outputs.archive_filename }}\`"
+            echo "- Checksums: \`${{ steps.resolve.outputs.checksum_filename }}\`"
+            echo "- Publish enabled: \`${{ inputs.publish }}\`"
+            echo "- Upload workflow artifact: \`${{ inputs.upload_artifact }}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
