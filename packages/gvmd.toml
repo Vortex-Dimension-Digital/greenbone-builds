@@ -11,6 +11,13 @@ version = "v22.7.0"
 [build]
 system = "cmake"
 subdir = "."
+dependency_setup_commands = [
+  "apt-get update",
+  "apt-get install --yes ca-certificates curl gnupg",
+  "install -d /usr/share/keyrings",
+  "curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor --yes -o /usr/share/keyrings/postgresql.gpg",
+  "echo \"deb [signed-by=/usr/share/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main\" > /etc/apt/sources.list.d/pgdg.list",
+]
 dependencies = [
   "build-essential",
   "cmake",
@@ -25,15 +32,15 @@ dependencies = [
   "libical-dev",
   "libpq-dev",
   "pkg-config",
-  "postgresql-server-dev-all",
+  "postgresql-server-dev-17",
   "xmltoman",
   "xsltproc",
 ]
 commands = [
-  "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DPostgreSQL_INCLUDE_DIR=\"$(pg_config --includedir)\" -DPostgreSQL_TYPE_INCLUDE_DIR=\"$(pg_config --includedir-server)\"",
-  "cmake --build build --parallel \"${BUILD_JOBS}\"",
+  "PATH=\"/usr/lib/postgresql/17/bin:$PATH\" cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DPostgreSQL_INCLUDE_DIR=\"$(/usr/lib/postgresql/17/bin/pg_config --includedir)\" -DPostgreSQL_TYPE_INCLUDE_DIR=\"$(/usr/lib/postgresql/17/bin/pg_config --includedir-server)\"",
+  "PATH=\"/usr/lib/postgresql/17/bin:$PATH\" cmake --build build --parallel \"${BUILD_JOBS}\"",
   "rm -rf pkgroot",
-  "DESTDIR=\"$PWD/pkgroot\" cmake --install build",
+  "PATH=\"/usr/lib/postgresql/17/bin:$PATH\" DESTDIR=\"$PWD/pkgroot\" cmake --install build",
 ]
 
 [release]

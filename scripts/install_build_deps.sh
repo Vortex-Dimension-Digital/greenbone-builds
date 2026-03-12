@@ -8,11 +8,21 @@ fi
 
 source build/resolved.env
 
+if command -v sudo >/dev/null 2>&1; then
+  SUDO=(sudo)
+else
+  SUDO=()
+fi
+
 if [[ -f "${DEPENDENCY_SETUP_COMMANDS_FILE}" && -s "${DEPENDENCY_SETUP_COMMANDS_FILE}" ]]; then
   while IFS= read -r command; do
     [[ -z "${command}" ]] && continue
     echo "+ ${command}"
-    bash -lc "${command}"
+    if [[ ${#SUDO[@]} -gt 0 ]]; then
+      "${SUDO[@]}" bash -lc "${command}"
+    else
+      bash -lc "${command}"
+    fi
   done < "${DEPENDENCY_SETUP_COMMANDS_FILE}"
 fi
 
@@ -22,12 +32,6 @@ if [[ ! -s "${BUILD_DEPENDENCIES_FILE}" ]]; then
 fi
 
 mapfile -t deps < "${BUILD_DEPENDENCIES_FILE}"
-
-if command -v sudo >/dev/null 2>&1; then
-  SUDO=(sudo)
-else
-  SUDO=()
-fi
 
 if command -v apt-get >/dev/null 2>&1; then
   export DEBIAN_FRONTEND=noninteractive

@@ -335,6 +335,7 @@ The repository currently includes three real examples:
 - upstream repo: `https://github.com/greenbone/gvmd.git`
 - example ref: `v22.7.0`
 - build system: `cmake`
+- dependency setup: adds the PostgreSQL apt repository so the runner can install a matching PostgreSQL server development package
 - packaged output: installed `gvmd` binary, runtime data under `share/gvm/gvmd`, configs, and selected helpers
 
 `openvas-scanner.toml` uses:
