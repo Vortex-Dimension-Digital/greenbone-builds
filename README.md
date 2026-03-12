@@ -36,6 +36,8 @@ That makes the repo useful as a small build and publication system for upstream 
 .
 |-- README.md
 |-- packages/
+|   |-- gvmd.toml
+|   |-- pg-gvm-pg17.toml
 |   `-- openvas-scanner.toml
 |-- scripts/
 |   |-- build_package.sh
@@ -116,6 +118,7 @@ Supported sections:
   - `system`: `cmake`, `cargo`, `make`, or `custom`.
   - `subdir`: Optional working directory inside the checked-out repo.
   - `env`: Optional key/value environment variables exported before the build commands run.
+  - `dependency_setup_commands`: Optional shell commands run before dependency installation. Useful when a package needs an extra apt repository or other runner preparation.
   - `dependencies`: System packages required on Debian/Ubuntu runners. Self-hosted runners can preinstall them instead.
   - `commands`: Optional explicit build commands. If omitted, the scripts use a simple default per build system.
 - `[release]`
@@ -321,13 +324,30 @@ The scripts try to install Debian/Ubuntu build dependencies when `apt-get` is av
 
 ## Example package included
 
-The repository currently includes one real example:
+The repository currently includes three real examples:
 
+- `packages/gvmd.toml`
+- `packages/pg-gvm-pg17.toml`
 - `packages/openvas-scanner.toml`
 
-It uses:
+`gvmd.toml` uses:
+
+- upstream repo: `https://github.com/greenbone/gvmd.git`
+- example ref: `v22.7.0`
+- build system: `cmake`
+- packaged output: installed `gvmd` binary, runtime data under `share/gvm/gvmd`, configs, and selected helpers
+
+`openvas-scanner.toml` uses:
 
 - upstream repo: `https://github.com/greenbone/openvas-scanner.git`
 - example ref: `v23.41.2`
 - build system: `cmake`
 - packaged output: installed `openvas` binary plus selected installed files
+
+`pg-gvm-pg17.toml` uses:
+
+- upstream repo: `https://github.com/greenbone/pg-gvm.git`
+- example ref: `v22.6.15`
+- build system: `cmake`
+- dependency setup: adds the PostgreSQL apt repository so the runner can install PostgreSQL 17 development headers
+- packaged output: the `pg-gvm` extension library and SQL/control files for PostgreSQL 17

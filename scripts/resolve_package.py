@@ -145,6 +145,7 @@ def main() -> int:
     commands = build.get("commands") or default_commands(build["system"])
     build_env = build.get("env", {})
     dependencies = build.get("dependencies", [])
+    dependency_setup_commands = build.get("dependency_setup_commands", [])
     output_files = target.get("output_files", [])
     if not output_files:
         raise SystemExit("Target definition must include at least one output file.")
@@ -168,6 +169,7 @@ def main() -> int:
 
     write_lines(BUILD_DIR / "build-commands.txt", commands)
     write_lines(BUILD_DIR / "build-dependencies.txt", dependencies)
+    write_lines(BUILD_DIR / "dependency-setup-commands.txt", dependency_setup_commands)
     write_lines(BUILD_DIR / "output-files.txt", output_files)
     (BUILD_DIR / "build-env.json").write_text(json.dumps(build_env, indent=2, sort_keys=True))
     (BUILD_DIR / "release-notes.md").write_text(f"{release_notes}\n")
@@ -194,6 +196,7 @@ def main() -> int:
         "RELEASE_NOTES_FILE": str(BUILD_DIR / "release-notes.md"),
         "BUILD_COMMANDS_FILE": str(BUILD_DIR / "build-commands.txt"),
         "BUILD_DEPENDENCIES_FILE": str(BUILD_DIR / "build-dependencies.txt"),
+        "DEPENDENCY_SETUP_COMMANDS_FILE": str(BUILD_DIR / "dependency-setup-commands.txt"),
         "BUILD_ENV_FILE": str(BUILD_DIR / "build-env.json"),
         "OUTPUT_FILES_FILE": str(BUILD_DIR / "output-files.txt"),
         "SOURCE_DIR": str(BUILD_DIR / "source"),

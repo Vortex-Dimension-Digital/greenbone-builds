@@ -1,0 +1,60 @@
+schema_version = 1
+id = "gvmd"
+name = "Greenbone Vulnerability Manager"
+description = "Builds the upstream gvmd daemon from source and packages an installed amd64 layout with the runtime data it expects."
+
+[upstream]
+repo = "https://github.com/greenbone/gvmd.git"
+ref = "v22.7.0"
+version = "v22.7.0"
+
+[build]
+system = "cmake"
+subdir = "."
+dependencies = [
+  "build-essential",
+  "cmake",
+  "gcc",
+  "git",
+  "libbsd-dev",
+  "libcjson-dev",
+  "libglib2.0-dev",
+  "libgnutls28-dev",
+  "libgpgme-dev",
+  "libgvm-dev",
+  "libical-dev",
+  "libpq-dev",
+  "pkg-config",
+  "postgresql-server-dev-all",
+  "xmltoman",
+  "xsltproc",
+]
+commands = [
+  "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DPostgreSQL_INCLUDE_DIR=\"$(pg_config --includedir)\" -DPostgreSQL_TYPE_INCLUDE_DIR=\"$(pg_config --includedir-server)\"",
+  "cmake --build build --parallel \"${BUILD_JOBS}\"",
+  "rm -rf pkgroot",
+  "DESTDIR=\"$PWD/pkgroot\" cmake --install build",
+]
+
+[release]
+tag_template = "{package}/{version}-{revision}"
+name_template = "{name} {version} ({revision})"
+archive_template = "{package}-{version}-{revision}-{os}-{arch}"
+notes = """
+Internal rebuild of upstream source.
+"""
+
+[[targets]]
+os = "linux"
+arch = "amd64"
+archive = "tar.gz"
+output_files = [
+  "pkgroot/usr/local/sbin/gvmd",
+  "pkgroot/usr/local/lib/libgvm-pg-server.so",
+  "pkgroot/usr/local/bin/gvm-manage-certs",
+  "pkgroot/usr/local/share/gvm/gvmd",
+  "pkgroot/etc/gvm/gvmd_log.conf",
+  "pkgroot/etc/gvm/pwpolicy.conf",
+  "pkgroot/lib/systemd/system/gvmd.service",
+  "pkgroot/usr/local/share/man/man8/gvmd.8",
+]

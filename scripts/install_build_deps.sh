@@ -8,6 +8,14 @@ fi
 
 source build/resolved.env
 
+if [[ -f "${DEPENDENCY_SETUP_COMMANDS_FILE}" && -s "${DEPENDENCY_SETUP_COMMANDS_FILE}" ]]; then
+  while IFS= read -r command; do
+    [[ -z "${command}" ]] && continue
+    echo "+ ${command}"
+    bash -lc "${command}"
+  done < "${DEPENDENCY_SETUP_COMMANDS_FILE}"
+fi
+
 if [[ ! -s "${BUILD_DEPENDENCIES_FILE}" ]]; then
   echo "No build dependencies declared."
   exit 0

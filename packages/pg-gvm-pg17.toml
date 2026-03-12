@@ -1,0 +1,54 @@
+schema_version = 1
+id = "pg-gvm-pg17"
+name = "pg-gvm for PostgreSQL 17"
+description = "Builds the upstream pg-gvm PostgreSQL extension against PostgreSQL 17 and packages the install layout for linux amd64."
+
+[upstream]
+repo = "https://github.com/greenbone/pg-gvm.git"
+ref = "v22.6.15"
+version = "v22.6.15"
+
+[build]
+system = "cmake"
+subdir = "."
+dependency_setup_commands = [
+  "apt-get update",
+  "apt-get install --yes ca-certificates curl gnupg",
+  "install -d /usr/share/keyrings",
+  "curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor --yes -o /usr/share/keyrings/postgresql.gpg",
+  "echo \"deb [signed-by=/usr/share/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main\" > /etc/apt/sources.list.d/pgdg.list",
+]
+dependencies = [
+  "build-essential",
+  "cmake",
+  "gcc",
+  "git",
+  "libglib2.0-dev",
+  "libgvm-dev",
+  "libical-dev",
+  "pkg-config",
+  "postgresql-server-dev-17",
+]
+commands = [
+  "PATH=\"/usr/lib/postgresql/17/bin:$PATH\" cmake -S . -B build -DCMAKE_BUILD_TYPE=Release",
+  "PATH=\"/usr/lib/postgresql/17/bin:$PATH\" cmake --build build --parallel \"${BUILD_JOBS}\"",
+  "rm -rf pkgroot",
+  "PATH=\"/usr/lib/postgresql/17/bin:$PATH\" DESTDIR=\"$PWD/pkgroot\" cmake --install build",
+]
+
+[release]
+tag_template = "{package}/{version}-{revision}"
+name_template = "{name} {version} ({revision})"
+archive_template = "{package}-{version}-{revision}-{os}-{arch}"
+notes = """
+Internal rebuild of upstream source for PostgreSQL 17.
+"""
+
+[[targets]]
+os = "linux"
+arch = "amd64"
+archive = "tar.gz"
+output_files = [
+  "pkgroot/usr/lib/postgresql/17/lib/libpg-gvm.so",
+  "pkgroot/usr/share/postgresql/17/extension",
+]
